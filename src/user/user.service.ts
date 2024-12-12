@@ -4,12 +4,14 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { User } from './user.schema';
 import { Model } from 'mongoose';
+import { request } from 'express'
 
 @Injectable()
 export class UserService {
   constructor (@InjectModel(User.name) private userModule:Model<User>){}
-  create(createUserDto: CreateUserDto) {
-    return this.userModule.create(createUserDto);
+  async create(createUserDto: CreateUserDto,payload:string) {
+    return "ok"
+    // return this.userModule.create(createUserDto);
   }
 
   findAll() {
