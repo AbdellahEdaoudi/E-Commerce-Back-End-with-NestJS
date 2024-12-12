@@ -31,8 +31,9 @@ export class User {
 
   @Prop({
     type: String,
-    required: [true, 'Role is required'],
-    enum: ['Admin', 'User'],
+    required: [false, 'Role is required'],
+    enum: ['admin', 'user'],
+    lowercase: true,
   })
   role: string;
 
@@ -63,19 +64,19 @@ export class User {
 
   @Prop({
     type: Boolean,
-    required: true,
+    required: false,
   })
   active: boolean;
 
   @Prop({
     type: String,
-    required: [true, 'Verification code is required'],
+    required: [false, 'Verification code is required'],
   })
   verificationCode: string;
 
   @Prop({
     type: String,
-    required: [true, 'Gender is required'],
+    required: [false, 'Gender is required'],
     enum: ['male', 'female'],
   })
   gender: string;

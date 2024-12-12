@@ -5,7 +5,7 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { AuthGuard } from './guard/auth.guard';
 import { Roles } from './decorator/roles.decorator';
 
-@Controller('user')
+@Controller('/v1/user') 
 export class UserController {
   constructor(private readonly userService: UserService) {}
 

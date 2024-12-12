@@ -1,17 +1,33 @@
-import { Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { User } from './user.schema';
 import { Model } from 'mongoose';
-import { request } from 'express'
+import * as bcrypt from "bcrypt"
+
+const saltOrRounds = 10;
 
 @Injectable()
 export class UserService {
   constructor (@InjectModel(User.name) private userModule:Model<User>){}
-  async create(createUserDto: CreateUserDto,payload:string) {
-    return "ok"
-    // return this.userModule.create(createUserDto);
+  async create(createUserDto: CreateUserDto , payload:any) {
+    const ifUserExist = await this.userModule.findOne({
+      email:createUserDto.email
+    })
+    if (ifUserExist) {
+      throw new HttpException('User already exist',400);
+    }
+    const password = await bcrypt.hash(createUserDto.password, saltOrRounds);
+    const user = {
+      password,
+      role: createUserDto.role ?? "user",
+    }
+    return {
+      status: 200,
+      message: "user creates successfully",
+      data : await this.userModule.create({...user,...createUserDto})
+    }
   }
 
   findAll() {

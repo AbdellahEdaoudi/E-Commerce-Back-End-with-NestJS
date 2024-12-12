@@ -18,7 +18,8 @@ export class CreateUserDto {
   password: string;
 
   // Role
-  @IsEnum(['Admin', 'User'], { message: 'Role must be either Admin or User' })
+  @IsOptional()
+  @IsEnum(['admin', 'user'], { message: 'Role must be either Admin or User' })
   role: string;
 
   // Avatar (Optional)
@@ -43,16 +44,19 @@ export class CreateUserDto {
   address?: string;
 
   // Active (Boolean)
+  @IsOptional()
   @IsBoolean()
   @IsIn([true, false], { message: 'Active must be a boolean value (true or false)' })
   active: boolean;
 
   // Verification Code
+  @IsOptional()
   @IsString()
   @MinLength(6, { message: 'Verification code must be at least 6 characters long' })
   verificationCode: string;
 
   // Gender
+  @IsOptional()
   @IsEnum(['male', 'female'], { message: 'Gender must be either male or female' })
   gender: string;
 }
