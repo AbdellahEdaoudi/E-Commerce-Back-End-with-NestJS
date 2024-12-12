@@ -25,7 +25,6 @@ export class User {
     type: String,
     required: [true, 'Password is required'],
     minlength: [3, 'Password must be at least 3 characters'],
-    maxlength: [20, 'Password must be at most 20 characters'],
   })
   password: string;
 

@@ -1,4 +1,4 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable, NotFoundException, Param } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { InjectModel } from '@nestjs/mongoose';
@@ -11,38 +11,83 @@ const saltOrRounds = 10;
 @Injectable()
 export class UserService {
   constructor (@InjectModel(User.name) private userModule:Model<User>){}
-  async create(createUserDto: CreateUserDto , payload:any) {
-    const ifUserExist = await this.userModule.findOne({
-      email:createUserDto.email
-    })
-    if (ifUserExist) {
-      throw new HttpException('User already exist',400);
-    }
+
+  async create(createUserDto: CreateUserDto) {
+  const ifUserExist = await this.userModule.findOne({
+    email: createUserDto.email
+  });
+
+  if (ifUserExist) {
+    throw new HttpException('User already exists', 400);
+  }
+  try {
+    const saltOrRounds = 10;
     const password = await bcrypt.hash(createUserDto.password, saltOrRounds);
+    console.log('Encrypted password:', password);
+    
     const user = {
+      ...createUserDto,
       password,
       role: createUserDto.role ?? "user",
+    };
+
+    const createdUser = await this.userModule.create(user);
+
+    return {
+      status: 200,
+      message: "User created successfully",
+      data: createdUser
+    };
+  } catch (error) {
+    console.error('Error hashing password:', error);
+    throw new HttpException('Error hashing password', 500);
+  }
+}
+
+  async findAll() {
+    return await this.userModule.find().select('-password ');
+  }
+
+  async findOne(id: string) {
+    const user = await this.userModule.findById(id).select('-password -__v')
+    if (!user) {
+      throw new NotFoundException("User Not found")
+    }
+    return user;
+  }
+
+   async update(id: string, updateUserDto: UpdateUserDto): Promise<{ status: number; message: string; data: User }> {
+    const FindUser = await this.userModule.findOne({_id:id})
+    if (!FindUser) {
+      throw new NotFoundException('User not found');
+    }
+    const ifUserExist = await this.userModule.findOne({
+      email: updateUserDto.email
+    });
+    if (ifUserExist && ifUserExist._id.toString() !== id) {
+      throw new HttpException('Email already exists', 400);
+    }
+    if (updateUserDto.password) {
+      updateUserDto.password = await bcrypt.hash(updateUserDto.password, saltOrRounds);
+    }
+    const updateData = { ...updateUserDto };
+    delete updateData.email;
+    return {
+      status: 200,
+      message: 'User updated successfully',
+      data: await this.userModule.findByIdAndUpdate(id, updateUserDto,{new: true})
+    };
+   }
+
+  async remove(id: string) {
+    const deletedUser = await this.userModule.findByIdAndDelete(id).select('-password -__v');
+    if (!deletedUser) {
+      throw new NotFoundException('User not found');
     }
     return {
       status: 200,
-      message: "user creates successfully",
-      data : await this.userModule.create({...user,...createUserDto})
-    }
-  }
-
-  findAll() {
-    return this.userModule.find();
-  }
-
-  findOne(id: number) {
-    return `This action returns a #${id} user`;
-  }
-
-  update(id: number, updateUserDto: UpdateUserDto) {
-    return `This action updates a #${id} user`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} user`;
+      message: 'User deleted successfully',
+      data: deletedUser,
+    };
   }
 }

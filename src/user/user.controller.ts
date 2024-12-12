@@ -13,27 +13,37 @@ export class UserController {
   @UseGuards(AuthGuard)
   @Roles(['admin'])
   create(@Body(new ValidationPipe({whitelist:true,forbidNonWhitelisted:true}))
-   createUserDto: CreateUserDto ,@Req() req) {
-    return this.userService.create(createUserDto,req.user);
+   createUserDto: CreateUserDto) {
+    return this.userService.create(createUserDto);
   }
 
   @Get()
+  @UseGuards(AuthGuard)
+  @Roles(['admin'])
   findAll() {
     return this.userService.findAll();
   }
 
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.userService.findOne(+id);
+    return this.userService.findOne(id);
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
-    return this.userService.update(+id, updateUserDto);
+  @UseGuards(AuthGuard)
+  @Roles(['admin'])
+  update(
+    @Param('id') id: string,
+    @Body(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }))
+    updateUserDto: UpdateUserDto
+  ) {
+    return this.userService.update(id, updateUserDto);
   }
 
   @Delete(':id')
+  @UseGuards(AuthGuard)
+  @Roles(['admin'])
   remove(@Param('id') id: string) {
-    return this.userService.remove(+id);
+    return this.userService.remove(id);
   }
 }
