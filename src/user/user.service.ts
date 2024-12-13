@@ -43,9 +43,29 @@ export class UserService {
     throw new HttpException('Error hashing password', 500);
   }
 }
-
-  async findAll() {
-    return await this.userModule.find().select('-password ');
+  // pagination
+  async findAll(query) {
+    const {_limit,skip,sort,name,email,role} = query;
+    // if (Number.isNaN(Number(+_limit))) {
+    //   throw new HttpException('Invalid limit',400)
+    // }
+    const users = await this.userModule.find()
+    .skip(Number(skip) || 0)
+    .limit(Number(_limit) || 1)
+    // or => whare by all keyword, regex => whare by any keyword
+    // .or([{name},{email},{role}])
+    .where('name',new RegExp(name,'i'))
+    .where('email',new RegExp(email,'i'))
+    .where('role',new RegExp(role,'i'))
+    .sort(sort || {})
+    .select('-password -__v')
+    .exec();
+    return {
+      status : 200,
+      message:'Users found successfully',
+      leangth:users.length,
+      data : users
+    }
   }
 
   async findOne(id: string) {
