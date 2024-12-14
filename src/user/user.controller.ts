@@ -46,4 +46,35 @@ export class UserController {
   remove(@Param('id') id: string) {
     return this.userService.remove(id);
   }
+
+}
+
+
+@Controller('/v1/userMe') 
+export class UserMEController {
+  constructor(private readonly userService: UserService) {}
+  
+  // for User
+  @Get()
+  @Roles(['admin',"user"])
+  @UseGuards(AuthGuard)
+  getMe(@Req() req:any){
+    console.log(req.user);
+    return this.userService.getMe(req.user);
+  }
+  // Update User
+  @Patch()
+  @UseGuards(AuthGuard)
+  @Roles(['user', 'admin'])
+  updateMe(@Req() req: any, @Body(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true })) updateUserDto: UpdateUserDto) {
+    return this.userService.updateMe(req.user, updateUserDto);
+  }
+
+  // Delete User
+  @Patch("delete")
+  @UseGuards(AuthGuard)
+  @Roles(['user'])
+  deleteMe(@Req() req: any) {
+    return this.userService.deleteMe(req.user);
+  }
 }

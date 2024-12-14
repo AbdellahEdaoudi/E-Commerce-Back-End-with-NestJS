@@ -22,7 +22,7 @@ import { Roles } from '../decorator/roles.decorator';
       const token = this.extractTokenFromHeader(request);
       const roles = this.reflector.get(Roles, context.getHandler());
        if (!roles) {
-         return true;
+         return false;
        }
       if (!token) {
         throw new UnauthorizedException();
@@ -34,6 +34,10 @@ import { Roles } from '../decorator/roles.decorator';
             secret: process.env.JWT_SECRET
           }
         );
+        if (payload._id) {
+          request['user'] = payload
+          return true
+        }
         if (!payload.role  || payload.role === '' || !roles.includes(payload.role)) {
           throw new UnauthorizedException();
         }  
