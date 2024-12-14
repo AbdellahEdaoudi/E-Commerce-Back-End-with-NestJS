@@ -53,3 +53,21 @@ export class SignInDto {
  @IsIn([true, false], { message: 'Active must be a boolean value (true or false)' })
  active: boolean;
 }
+
+export class ResetPasswordDto {
+  // Email
+  @IsEmail({}, { message: 'Email must be a valid email address' })
+  email: string;
+}
+
+
+export class ChangePasswordDto {
+  // Email
+  @IsEmail({}, { message: 'Email must be a valid email address' })
+  email: string;
+
+  // Password
+  @IsString()
+  @MinLength(3, { message: 'Password must be at least 3 characters' })
+  password: string;
+}
