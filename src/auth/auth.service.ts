@@ -27,7 +27,7 @@ export class AuthService {
         active:true
       });
     // Generate JWT Token
-    const payload = { userId: newUser._id,email:newUser.email, role: newUser.role };
+    const payload = { _id: newUser._id,email:newUser.email, role: newUser.role };
     const token = await this.jwtService.signAsync(payload,{ 
       secret: process.env.JWT_SECRET
       });
@@ -52,7 +52,7 @@ export class AuthService {
     }
 
     // Generate JWT Token
-    const payload = { userId: user._id, email: user.email, role: user.role };
+    const payload = { _id: user._id, email: user.email, role: user.role };
     const token = await this.jwtService.signAsync(payload, { 
       secret: process.env.JWT_SECRET 
     });

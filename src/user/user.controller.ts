@@ -56,7 +56,9 @@ export class UserMEController {
   
   // for User
   @Get()
-  @Roles(['admin',"user"])
+  // @Roles(['admin'])
+  @Roles(["user"])
+  // @Roles(['admin',"user"])
   @UseGuards(AuthGuard)
   getMe(@Req() req:any){
     console.log(req.user);

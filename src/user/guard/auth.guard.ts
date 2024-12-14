@@ -34,7 +34,7 @@ import { Roles } from '../decorator/roles.decorator';
             secret: process.env.JWT_SECRET
           }
         );
-        if (payload._id) {
+        if (payload._id && payload.role === "admin") {
           request['user'] = payload
           return true
         }
