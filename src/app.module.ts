@@ -8,6 +8,7 @@ import { MailerModule } from '@nestjs-modules/mailer';
 import { CategoryModule } from './category/category.module';
 import { SubCategoryModule } from './sub-category/sub-category.module';
 import { BrandModule } from './brand/brand.module';
+import { CouponModule } from './coupon/coupon.module';
 
 @Module({
   imports: [ConfigModule.forRoot(),MongooseModule.forRoot('mongodb://localhost:27017/Ecom-nest'), UserModule,
@@ -26,7 +27,7 @@ import { BrandModule } from './brand/brand.module';
         },
       }
     }),
-    CategoryModule,SubCategoryModule, BrandModule
+    CategoryModule,SubCategoryModule, BrandModule, CouponModule
   ],
   controllers: [],
   providers: [],
