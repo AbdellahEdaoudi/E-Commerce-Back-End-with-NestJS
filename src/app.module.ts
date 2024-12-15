@@ -5,6 +5,7 @@ import { ConfigModule } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { AuthModule } from './auth/auth.module';
 import { MailerModule } from '@nestjs-modules/mailer';
+import { CategoryModule } from './category/category.module';
 
 @Module({
   imports: [ConfigModule.forRoot(),MongooseModule.forRoot('mongodb://localhost:27017/Ecom-nest'), UserModule,
@@ -23,6 +24,7 @@ import { MailerModule } from '@nestjs-modules/mailer';
         },
       }
     }),
+    CategoryModule,
   ],
   controllers: [],
   providers: [],
