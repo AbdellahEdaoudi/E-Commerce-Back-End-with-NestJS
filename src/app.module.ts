@@ -10,6 +10,7 @@ import { SubCategoryModule } from './sub-category/sub-category.module';
 import { BrandModule } from './brand/brand.module';
 import { CouponModule } from './coupon/coupon.module';
 import { SupplierModule } from './suppliers/suppliers.module';
+import { RequestProductModule } from './req-product/req-product.module';
 
 @Module({
   imports: [ConfigModule.forRoot(),MongooseModule.forRoot('mongodb://localhost:27017/Ecom-nest'), UserModule,
@@ -28,7 +29,7 @@ import { SupplierModule } from './suppliers/suppliers.module';
         },
       }
     }),
-    CategoryModule,SubCategoryModule, BrandModule, CouponModule, SupplierModule
+    CategoryModule,SubCategoryModule, BrandModule, CouponModule, SupplierModule, RequestProductModule
   ],
   controllers: [],
   providers: [],
