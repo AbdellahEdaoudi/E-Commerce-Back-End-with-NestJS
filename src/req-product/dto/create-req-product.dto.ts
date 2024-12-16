@@ -26,7 +26,7 @@ import {
     @IsOptional()
     @IsString({ message: 'Category must be a string' })
     category?: string;
-  
+    @IsOptional()
     @IsMongoId({ message: 'User ID must be a valid ObjectId' })
     @IsNotEmpty({ message: 'User ID is required' })
     user: string;

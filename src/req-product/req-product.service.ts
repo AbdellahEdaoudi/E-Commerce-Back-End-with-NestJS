@@ -14,22 +14,22 @@ export class RequestProductService {
   ) {}
 
   // Create a new request
-  async create(createRequestProductDto: CreateRequestProductDto) {
+  async create(createRequestProductDto: CreateRequestProductDto,req:any) {
     const reqproduct = await this.requestProductModel.findOne(
       { titleNeed: createRequestProductDto.titleNeed,
-        user:createRequestProductDto.user
+        user:req.user._id
       });
     if (reqproduct) {
       throw new HttpException('Request Product already exists', 400);
     }
 
-    const user = await this.UserModel.findOne({_id:createRequestProductDto.user})
+    const user = await this.UserModel.findOne({_id:req.user._id})
     if (!user) {
       throw new NotFoundException('User not found');
     }
     const newRequest = await this.requestProductModel.create(
-      createRequestProductDto,
-    ).then((doc) => doc.populate('user', '-_id -__v -role'));
+      {...createRequestProductDto,user:req.user._id},
+    ).then((doc) => doc.populate('user', '-__v -role'));
     return {
       status: 200,
       message: 'Request created successfully',
@@ -67,6 +67,50 @@ export class RequestProductService {
     return {
       status: 200,
       data: request,
+    };
+  }
+
+  // Update a request (User only)
+  async update(
+    id: string,
+    updateRequestProductDto: UpdateRequestProductDto,req:any
+  ) {
+    const _idUpdatedUser = req.user._id;
+    const requestProduct = await this.requestProductModel.findById(id);
+    if (!requestProduct) {
+      throw new NotFoundException('Request not found');
+    }
+    if (_idUpdatedUser.toString() !== requestProduct.user.toString()) {
+      throw new UnauthorizedException();
+    }
+
+    const updatedRequest = await this.requestProductModel.findByIdAndUpdate(
+      id,
+      {...updateRequestProductDto,user:req.user._id},
+      { new: true },
+    ).then((doc) => doc.populate('user', '-__v -role'));;
+    return {
+      status: 200,
+      message: 'Request updated successfully',
+      data: updatedRequest,
+    };
+  }
+
+  // Delete a request (User only)
+  async remove(id: string,req:any) {
+    const requestProduct = await this.requestProductModel.findById(id);
+    if (!requestProduct) {
+      throw new NotFoundException('Request not found');
+    }
+
+    const _idDeletedUser = req.user._id;
+    if (_idDeletedUser.toString() !== requestProduct.user.toString()) {
+      throw new UnauthorizedException();
+    }
+    await this.requestProductModel.findByIdAndDelete(id);
+    return {
+      status: 200,
+      message: 'Request deleted successfully',
     };
   }
 }

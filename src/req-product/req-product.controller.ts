@@ -33,7 +33,7 @@ export class RequestProductController {
     if (req.user.role === "admin") {
       throw new UnauthorizedException();
     }
-    return this.requestProductService.create(createRequestProductDto);
+    return this.requestProductService.create(createRequestProductDto,req);
   }
 
   @Get()
@@ -48,5 +48,29 @@ export class RequestProductController {
   @Roles(['user', 'admin'])
   findOne(@Param('id') id: string,@Req() req) {
     return this.requestProductService.findOne(id,req);
+  }
+
+  @Patch(':id')
+  @UseGuards(AuthGuard)
+  @Roles(['user'])
+  update(
+    @Param('id') id: string,
+    @Body(new ValidationPipe({ forbidNonWhitelisted: true }))
+    updateRequestProductDto: UpdateRequestProductDto, @Req() req
+  ) {
+    if (req.user.role === "admin") {
+      throw new UnauthorizedException();
+    }
+    return this.requestProductService.update(id,updateRequestProductDto,req);
+  }
+
+  @Delete(':id')
+  @UseGuards(AuthGuard)
+  @Roles(['user'])
+  remove(@Param('id') id: string,@Req() req) {
+    if (req.user.role === "admin") {
+      throw new UnauthorizedException();
+    }
+    return this.requestProductService.remove(id,req);
   }
 }
