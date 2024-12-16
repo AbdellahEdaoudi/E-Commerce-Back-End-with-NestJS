@@ -42,4 +42,11 @@ export class RequestProductController {
   findAll() {
     return this.requestProductService.findAll();
   }
+
+  @Get(':id')
+  @UseGuards(AuthGuard)
+  @Roles(['user', 'admin'])
+  findOne(@Param('id') id: string,@Req() req) {
+    return this.requestProductService.findOne(id,req);
+  }
 }
