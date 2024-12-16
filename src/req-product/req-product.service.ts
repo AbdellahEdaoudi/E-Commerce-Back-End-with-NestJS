@@ -36,4 +36,17 @@ export class RequestProductService {
       data: newRequest,
     };
   }
+
+  // Get all requests (Admin only)
+  async findAll() {
+    const requests = await this.requestProductModel
+      .find()
+      .populate('user', '-password -__v -role')
+      .select('-__v');
+    return {
+      status: 200,
+      length: requests.length,
+      data: requests,
+    };
+  }
 }

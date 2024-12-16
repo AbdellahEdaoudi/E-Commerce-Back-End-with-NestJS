@@ -36,5 +36,10 @@ export class RequestProductController {
     return this.requestProductService.create(createRequestProductDto);
   }
 
-  
+  @Get()
+  @UseGuards(AuthGuard)
+  @Roles(['admin'])
+  findAll() {
+    return this.requestProductService.findAll();
+  }
 }
