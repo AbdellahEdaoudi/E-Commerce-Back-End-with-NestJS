@@ -11,6 +11,7 @@ import { BrandModule } from './brand/brand.module';
 import { CouponModule } from './coupon/coupon.module';
 import { SupplierModule } from './suppliers/suppliers.module';
 import { RequestProductModule } from './req-product/req-product.module';
+import { TaxModule } from './tax/tax.module';
 
 @Module({
   imports: [ConfigModule.forRoot(),MongooseModule.forRoot('mongodb://localhost:27017/Ecom-nest'), UserModule,
@@ -29,7 +30,7 @@ import { RequestProductModule } from './req-product/req-product.module';
         },
       }
     }),
-    CategoryModule,SubCategoryModule, BrandModule, CouponModule, SupplierModule, RequestProductModule
+    CategoryModule,SubCategoryModule, BrandModule, CouponModule, SupplierModule, RequestProductModule, TaxModule
   ],
   controllers: [],
   providers: [],
