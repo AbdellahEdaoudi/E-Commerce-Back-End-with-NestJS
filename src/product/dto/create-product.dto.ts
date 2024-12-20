@@ -40,7 +40,7 @@ export class CreateProductDto {
   priceAfterDiscount?: number;
 
   @IsOptional()
-  @IsArray({ message: 'Color must be an array of strings' })
+  @IsArray({ message: 'Colors must be an array of strings' })
   @IsString({ each: true, message: 'Each color must be a string' })
   colors?: string[];
 
@@ -57,4 +57,15 @@ export class CreateProductDto {
   @IsString({ message: 'Brand ID must be a string' })
   @IsMongoId({ message: 'Brand ID must be a valid MongoDB ObjectId' })
   brand?: Types.ObjectId;
+
+  @IsOptional()
+  @IsNumber({}, { message: 'Ratings Average must be a number' })
+  @Min(0, { message: 'Ratings Average must be at least 0' })
+  @Max(5, { message: 'Ratings Average cannot exceed 5' })
+  ratingsAverage?: number;
+
+  @IsOptional()
+  @IsNumber({}, { message: 'Ratings Quantity must be a number' })
+  @Min(0, { message: 'Ratings Quantity must be at least 0' })
+  ratingsQuantity?: number;
 }
