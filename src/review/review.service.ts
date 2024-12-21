@@ -1,4 +1,4 @@
-import { HttpException, Injectable } from '@nestjs/common';
+import { HttpException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { CreateReviewDto } from './dto/create-review.dto';
 import { UpdateReviewDto } from './dto/update-review.dto';
 import { InjectModel } from '@nestjs/mongoose';
@@ -52,15 +52,81 @@ export class ReviewService {
     };
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} review`;
+  async findOne(user_id: string) {
+    const reviews = await this.reviewModule
+      .find({ user: user_id })
+      .populate('user product', 'name role email title')
+      .select('-__v');
+    return {
+      status: 200,
+      message: 'Reviews Found',
+      length: reviews.length,
+      data: reviews,
+    };
   }
 
-  update(id: number, updateReviewDto: UpdateReviewDto) {
-    return `This action updates a #${id} review`;
+  async update(
+    id: string,
+    updateReviewDto: UpdateReviewDto,
+    user_id: string,
+  ) {
+    const findReview = await this.reviewModule.findById(id);
+
+    if (!findReview) {
+      throw new NotFoundException('Not Found Review On this Id');
+    }
+    
+    if (user_id.toString() !== findReview.user.toString()) {
+      throw new UnauthorizedException();
+    }
+ 
+    const updateReview = await this.reviewModule
+      .findByIdAndUpdate(
+        id,
+        {
+          ...updateReviewDto,
+          user: user_id,
+          product: updateReviewDto.product,
+        },
+        { new: true },
+      )
+      .select('-__v');
+
+    return {
+      status: 200,
+      message: 'Review Updated successfully',
+      data: updateReview,
+    };
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} review`;
+  async remove(id: string, user_id: string): Promise<void> {
+    const findReview = await this.reviewModule.findById(id);
+
+    if (!findReview) {
+      throw new NotFoundException('Not Found Review On this Id');
+    }
+    if (user_id.toString() !== findReview.user.toString()) {
+      throw new UnauthorizedException();
+    }
+    await this.reviewModule.findByIdAndDelete(id);
+
+    const reviewsOnSingleProduct = await this.reviewModule
+      .find({
+        product: findReview.product,
+      })
+      .select('rating');
+    const ratingsQuantity = reviewsOnSingleProduct.length;
+    if (ratingsQuantity > 0) {
+      let totalRatings: number = 0;
+      for (let i = 0; i < reviewsOnSingleProduct.length; i++) {
+        totalRatings += reviewsOnSingleProduct[i].rating;
+      }
+      const ratingsAverage = totalRatings / ratingsQuantity;
+
+      await this.productModule.findByIdAndUpdate(findReview.product, {
+        ratingsAverage,
+        ratingsQuantity,
+      });
+    }
   }
 }

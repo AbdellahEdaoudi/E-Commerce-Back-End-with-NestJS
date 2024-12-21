@@ -19,24 +19,50 @@ export class ReviewController {
         }
     return this.reviewService.create(createReviewDto,req.user._id);
   }
-
+  //  @docs   Any User Can Get All Reviews On Product
+  //  @Route  GET /api/v1/review
+  //  @access Public
   @Get(":id")
   findAll(@Param('id') id: string) {
     return this.reviewService.findAll(id);
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.reviewService.findOne(+id);
-  }
-
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateReviewDto: UpdateReviewDto) {
-    return this.reviewService.update(+id, updateReviewDto);
+  @Roles(['user'])
+  @UseGuards(AuthGuard)
+  update(
+    @Param('id') id: string,
+    @Body(new ValidationPipe({ forbidNonWhitelisted: true, whitelist: true }))
+    updateReviewDto: UpdateReviewDto,
+    @Req() req,
+  ) {
+    if (req.user.role.toLowerCase() === 'admin') {
+      throw new UnauthorizedException();
+    }
+    const user_id = req.user._id;
+    return this.reviewService.update(id, updateReviewDto, user_id);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.reviewService.remove(+id);
+  @Roles(['user'])
+  @UseGuards(AuthGuard)
+  remove(@Param('id') id: string, @Req() req) {
+    if (req.user.role.toLowerCase() === 'admin') {
+      throw new UnauthorizedException();
+    }
+    const user_id = req.user._id;
+    return this.reviewService.remove(id, user_id);
+  }
+}
+
+
+@Controller('v1/dashbourd/review')
+export class ReviewDashbourdController {
+  constructor(private readonly reviewService: ReviewService) {}
+  @Get(':id')
+  @Roles(['admin'])
+  @UseGuards(AuthGuard)
+  findOne(@Param('id') user_id: string) {
+    return this.reviewService.findOne(user_id);
   }
 }
