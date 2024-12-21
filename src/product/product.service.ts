@@ -4,17 +4,66 @@ import { Model } from 'mongoose';
 import { CreateProductDto } from './dto/create-product.dto';
 import { Product } from './product.schema';
 import { UpdateProductDto } from './dto/update-product.dto';
+import { Category } from 'src/category/category.schema';
+import { SubCategory } from 'src/sub-category/sub-category.schema';
+import { Brand } from 'src/brand/brand.schema';
 
 @Injectable()
 export class ProductService {
-  constructor(@InjectModel(Product.name) private productModel: Model<Product>) {}
+  constructor(
+    @InjectModel(Product.name) private productModel: Model<Product>,   
+    @InjectModel(Category.name) private categoryModel: Model<Category>,
+    @InjectModel(SubCategory.name) private subCategoryModel: Model<SubCategory>,
+    @InjectModel(Brand.name) private readonly brandModel: Model<Brand>
+  ) {}
   async create(createProductDto: CreateProductDto) {
-    const findProduct = await this.productModel.findOne({title:createProductDto.title});
-    if (findProduct) {
-      throw new HttpException('Product with this title already exists', 400);
+    const product = await this.productModel.findOne({
+      title: createProductDto.title,
+    });
+    const category = await this.categoryModel.findById(
+      createProductDto.category,
+    );
+
+    if (product) {
+      throw new HttpException('This Product already Exist', 400);
     }
-    const product = await this.productModel.create(createProductDto);
-    return { status: 201, message: 'Product created successfully', data: product };
+
+    if (!category) {
+      throw new HttpException('This Category not Exist', 400);
+    }
+
+    if (createProductDto.subCategory) {
+      const subCategory = await this.subCategoryModel.findById(
+        createProductDto.subCategory,
+      );
+      if (!subCategory) {
+        throw new HttpException('This Sub Category not Exist', 400);
+      }
+    }
+    if (createProductDto.brand) {
+      const brand = await this.brandModel.findById(
+      createProductDto.category,
+    );
+    if (!brand) {
+      throw new HttpException('This Brand not Exist', 400);
+    }
+    }
+    const priceAfterDiscount = createProductDto?.priceAfterDiscount || 0;
+    if (createProductDto.price < priceAfterDiscount) {
+      throw new HttpException(
+        'Must be price After discount greater than price',
+        400,
+      );
+    }
+
+    const newProduct = await (
+      await this.productModel.create(createProductDto)
+    ).populate('category subCategory brand', '-__v');
+    return {
+      status: 200,
+      message: 'Product created successfully',
+      data: newProduct,
+    };
   }
 
   async findAll(query: any) {
