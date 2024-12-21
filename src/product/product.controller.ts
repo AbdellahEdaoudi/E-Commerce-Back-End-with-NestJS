@@ -41,3 +41,13 @@ export class ProductController {
     return this.productService.remove(id);
   }
 }
+
+
+  /*
+     {
+       "gte"  === > [>or=]
+       "gt"  === > [>]
+       "lte"  === > [<or=]
+       "lt"  === > [<]
+     }
+  */

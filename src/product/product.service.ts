@@ -17,9 +17,71 @@ export class ProductService {
     return { status: 201, message: 'Product created successfully', data: product };
   }
 
-  async findAll(query) {
-    const products = await this.productModel.find(query).populate('category subCategory brand','-__v');
-    return { status: 200, length: products.length, data: products };
+  async findAll(query: any) {
+    // 1) filter
+    // eslint-disable-next-line prefer-const
+    let requestQuery = { ...query };
+    const removeQuery = [
+      'page',
+      'limit',
+      'sort',
+      'keyword',
+      'categoty',
+      'fields',
+    ];
+    removeQuery.forEach((singelQuery) => {
+      delete requestQuery[singelQuery];
+    });
+    requestQuery = JSON.parse(
+      JSON.stringify(requestQuery).replace(
+        /\b(gte|lte|lt|gt)\b/g,
+        (match) => `$${match}`,
+      ),
+    );
+
+    // 2) pagenation
+    const page = query?.page || 1;
+    const limit = query?.limit || 5;
+    const skip = (page - 1) * limit;
+
+    // 3) sorting
+    // eslint-disable-next-line prefer-const
+    let sort = query?.sort || 'asc';
+    if (!['asc', 'desc'].includes(sort)) {
+      throw new HttpException('Invalid sort', 400);
+    }
+    // 4) fields
+    // eslint-disable-next-line prefer-const
+    let fields = query?.fields || ''; // description,title
+    fields = fields.split(',').join(' ');
+
+    // 5) search
+    // eslint-disable-next-line prefer-const
+    let findData = { ...requestQuery };
+
+    if (query.keyword) {
+      findData.$or = [
+        { title: { $regex: query.keyword } },
+        { description: { $regex: query.keyword } },
+      ];
+    }
+    if (query.category) {
+      findData.category = query.category.toString();
+    }
+
+    const products = await this.productModel
+      .find(findData)
+      .limit(limit)
+      .skip(skip)
+      .sort({ title: sort })
+      .select(fields);
+    return {
+      status: 200,
+      message: 'Found Product',
+      isEmpty: products.length > 0 ? 'false' : 'true',
+      length: products.length,
+      data: products,
+    };
   }
 
   async findOne(id: string) {
