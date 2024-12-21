@@ -20,9 +20,9 @@ export class ReviewController {
     return this.reviewService.create(createReviewDto,req.user._id);
   }
 
-  @Get()
-  findAll() {
-    return this.reviewService.findAll();
+  @Get(":id")
+  findAll(@Param('id') id: string) {
+    return this.reviewService.findAll(id);
   }
 
   @Get(':id')

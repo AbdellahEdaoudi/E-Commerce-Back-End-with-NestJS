@@ -39,8 +39,17 @@ export class ReviewService {
     };
   }
 
-  findAll() {
-    return `This action returns all review`;
+  async findAll(prodcut_id: string) {
+    const reviews = await this.reviewModule
+      .find({ product: prodcut_id })
+      .populate('user product', 'name email title')
+      .select('-__v');
+    return {
+      status: 200,
+      message: 'Reviews Found',
+      length: reviews.length,
+      data: reviews,
+    };
   }
 
   findOne(id: number) {
