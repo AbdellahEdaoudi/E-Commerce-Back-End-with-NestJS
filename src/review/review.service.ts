@@ -32,6 +32,25 @@ export class ReviewService {
         user: user_id,
       })
     ).populate('product user', 'name email title description imageCover');
+
+    const reviewsOnSingleProduct = await this.reviewModule
+      .find({
+        product: createReviewDto.product,
+      })
+      .select('rating');
+    const ratingsQuantity = reviewsOnSingleProduct.length;
+    if (ratingsQuantity > 0) {
+      const totalRatings = reviewsOnSingleProduct.reduce(
+        (sum, review) => sum + review.rating,
+        0,
+      );
+      const ratingsAverage = totalRatings / ratingsQuantity;
+
+      await this.productModule.findByIdAndUpdate(createReviewDto.product, {
+        ratingsAverage,
+        ratingsQuantity,
+      });
+    }
     return {
       status: 200,
       message: 'Review Created successfully',
@@ -71,15 +90,12 @@ export class ReviewService {
     user_id: string,
   ) {
     const findReview = await this.reviewModule.findById(id);
-
     if (!findReview) {
       throw new NotFoundException('Not Found Review On this Id');
     }
-    
     if (user_id.toString() !== findReview.user.toString()) {
       throw new UnauthorizedException();
     }
- 
     const updateReview = await this.reviewModule
       .findByIdAndUpdate(
         id,
@@ -89,8 +105,26 @@ export class ReviewService {
           product: updateReviewDto.product,
         },
         { new: true },
-      )
-      .select('-__v');
+      ).select('-__v');
+
+      const reviewsOnSingleProduct = await this.reviewModule
+      .find({
+        product: findReview.product,
+      })
+      .select('rating');
+    const ratingsQuantity = reviewsOnSingleProduct.length;
+    if (ratingsQuantity > 0) {
+      const totalRatings = reviewsOnSingleProduct.reduce(
+        (sum, review) => sum + review.rating,
+        0,
+      );
+      const ratingsAverage = totalRatings / ratingsQuantity;
+
+      await this.productModule.findByIdAndUpdate(findReview.product, {
+        ratingsAverage,
+        ratingsQuantity,
+      });
+    }
 
     return {
       status: 200,
@@ -117,15 +151,20 @@ export class ReviewService {
       .select('rating');
     const ratingsQuantity = reviewsOnSingleProduct.length;
     if (ratingsQuantity > 0) {
-      let totalRatings: number = 0;
-      for (let i = 0; i < reviewsOnSingleProduct.length; i++) {
-        totalRatings += reviewsOnSingleProduct[i].rating;
-      }
+      const totalRatings = reviewsOnSingleProduct.reduce(
+        (sum, review) => sum + review.rating,
+        0,
+      );
       const ratingsAverage = totalRatings / ratingsQuantity;
 
       await this.productModule.findByIdAndUpdate(findReview.product, {
         ratingsAverage,
         ratingsQuantity,
+      });
+    }else {
+      await this.productModule.findByIdAndUpdate(findReview.product, {
+        ratingsAverage: 0,
+        ratingsQuantity: 0,
       });
     }
   }
