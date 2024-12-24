@@ -19,7 +19,13 @@ export class Cart {
     ], 
     required: true 
   })
-  cartItems: { productId: Types.ObjectId; quantity: number; color: string; price: number }[];
+  cartItems: { 
+    productId: {
+      _id: Types.ObjectId;
+      price: number;
+      priceAfterDiscount?: number;
+    };
+    quantity: number; color: string; price: number }[];
 
   @Prop({ type: Number, required: true })
   totalPrice: number;

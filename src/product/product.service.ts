@@ -42,7 +42,7 @@ export class ProductService {
     }
     if (createProductDto.brand) {
       const brand = await this.brandModel.findById(
-      createProductDto.category,
+      createProductDto.brand,
     );
     if (!brand) {
       throw new HttpException('This Brand not Exist', 400);
@@ -57,7 +57,9 @@ export class ProductService {
     }
 
     const newProduct = await (
-      await this.productModel.create(createProductDto)
+      await this.productModel.create({...createProductDto,
+        priceAfterDiscount:createProductDto.priceAfterDiscount || 0
+      })
     ).populate('category subCategory brand', '-__v');
     return {
       status: 200,

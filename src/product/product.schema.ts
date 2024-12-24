@@ -26,7 +26,7 @@ export class Product {
   @Prop({ type: Number, required: true, min: 1, max: 20000 })
   price: number;
 
-  @Prop({ type: Number, min: 1, max: 20000 })
+  @Prop({ type: Number, min: 0, max: 20000 })
   priceAfterDiscount: number;
 
   @Prop({ type: [String], default: [] })

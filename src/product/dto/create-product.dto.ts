@@ -35,7 +35,7 @@ export class CreateProductDto {
 
   @IsOptional()
   @IsNumber({}, { message: 'Price After Discount must be a number' })
-  @Min(1, { message: 'Price After Discount must be at least 1' })
+  @Min(0, { message: 'Price After Discount must be at least 1' })
   @Max(20000, { message: 'Price After Discount cannot exceed 20000' })
   priceAfterDiscount?: number;
 
