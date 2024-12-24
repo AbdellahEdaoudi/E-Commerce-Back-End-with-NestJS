@@ -52,4 +52,18 @@ export class CartController {
     return this.cartService.remove(productId, user_id);
   }
 
+  //  @docs   Can Only User Get Cart
+  //  @Route  GET /api/v1/cart
+  //  @access Private [User]
+  @Get()
+  @Roles(['user'])
+  @UseGuards(AuthGuard)
+  findOneForUser(@Req() req) {
+    if (req.user.role.toLowerCase() === 'admin') {
+      throw new UnauthorizedException();
+    }
+    const user_id = req.user._id;
+    return this.cartService.findOne(user_id);
+  }
+
 }
