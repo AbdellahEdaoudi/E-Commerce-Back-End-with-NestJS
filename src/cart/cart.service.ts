@@ -130,6 +130,48 @@ export class CartService {
         data: cart,
       };
     }
+
+
+    async remove(productId: string, user_id: string) {
+      const cart = await this.cartModule
+        .findOne({ user: user_id })
+        .populate(
+          'cartItems.productId',
+          'price title description priceAfterDiscount _id',
+        );
+      if (!cart) {
+        throw new NotFoundException('Not Found Cart');
+      }
+      const existingItem = cart.cartItems.find((item) =>
+            item.productId._id.equals(productId)
+          );
+      if (!existingItem) {
+        throw new NotFoundException('Product not found in cart.');
+      }
+      cart.cartItems = cart.cartItems.filter((item) =>
+            !item.productId._id.equals(productId)
+          );
+
+          // Recalculate total prices
+      cart.totalPrice = cart.cartItems.reduce(
+        (total, item) => total + item.quantity * item.productId.price,
+        0,
+      );
+    
+      cart.totalPriceAfterDiscount = cart.cartItems.reduce(
+        (total, item) =>
+          total + item.quantity * (item.productId.priceAfterDiscount || item.productId.price),
+        0,
+      );
+  
+      await cart.save();
+  
+      return {
+        status: 200,
+        message: 'Deleted Product',
+        data: cart,
+      };
+    }
     
     
 }
