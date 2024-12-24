@@ -80,4 +80,16 @@ export class CartController {
     return this.cartService.applyCoupon(user_id, couponName);
   }
 
+  // ======== For Admin ========== \\
+
+  //  @docs   Can Admin Get Any Cart of user
+  //  @Route  GET /api/v1/cart/admin/:userId
+  //  @access Private [Admin]
+  @Get('/admin/:userId')
+  @Roles(['admin'])
+  @UseGuards(AuthGuard)
+  findOneForAdmin(@Param('userId') userId: string) {
+    return this.cartService.findOneForAdmin(userId);
+  }
+
 }
