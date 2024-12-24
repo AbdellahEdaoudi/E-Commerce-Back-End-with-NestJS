@@ -92,4 +92,14 @@ export class CartController {
     return this.cartService.findOneForAdmin(userId);
   }
 
+  //  @docs   Can Admin Get All Carts
+  //  @Route  GET /api/v1/cart/admin
+  //  @access Private [Admin]
+  @Get('/admin')
+  @Roles(['admin'])
+  @UseGuards(AuthGuard)
+  findAllForAdmin() {
+    return this.cartService.findAllForAdmin();
+  }
+
 }
