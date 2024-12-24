@@ -1,15 +1,17 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, HttpException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import mongoose, { Model } from 'mongoose';
 import { Cart } from './cart.schema';
 import { Product } from 'src/product/product.schema';
 import { UpdateCartItemsDto } from './dto/update-cart-items.dto';
+import { Coupon } from 'src/coupon/coupon.schema';
 
 @Injectable()
 export class CartService {
   constructor(
       @InjectModel(Cart.name) private cartModule: Model<Cart>,
-      @InjectModel(Product.name) private productModule: Model<Product>
+      @InjectModel(Product.name) private productModule: Model<Product>,
+      @InjectModel(Coupon.name) private couponModule: Model<Coupon>
     ) {}
 
     async create(productId: string, userId: string) {
@@ -21,11 +23,12 @@ export class CartService {
       if (product.quantity <= 0) {
         throw new BadRequestException('Product out of stock.');
       }
-      const cart = await this.cartModule.findOne({ user: userId }).populate('cartItems.productId');
+      let cart = await this.cartModule.findOne({ user: userId })
+      .populate('cartItems.productId',"_id quantity price priceAfterDiscount ");
     
       if (!cart) {
         // Create a new cart if it doesn't exist
-        await this.cartModule.create({
+        cart = await this.cartModule.create({
           user: userId,
           cartItems: [
             { productId: productId, quantity: 1, color: '', price: product.price },
@@ -58,8 +61,25 @@ export class CartService {
             color: '',
             price: product.price,
           });
-          cart.totalPrice += product.price;
-          cart.totalPriceAfterDiscount += product.priceAfterDiscount || product.price;
+           // Recalculate total prices
+        cart.totalPrice = cart.cartItems.reduce(
+          (total, item) => total + item.quantity * item.productId.price,
+          0,
+        );
+      
+        cart.totalPriceAfterDiscount = cart.cartItems.reduce(
+          (total, item) =>
+            total + item.quantity * (item.productId.priceAfterDiscount || item.productId.price),
+          0,
+        );
+        if (cart.coupons && cart.coupons.length > 0) {
+          const totalDiscount = cart.coupons.reduce(
+            (sum, coupon) => sum + coupon.discount,
+            0,
+          );
+        cart.totalPrice -= totalDiscount
+        cart.totalPriceAfterDiscount -= totalDiscount
+      }
         }
         await cart.save();
       }
@@ -108,20 +128,17 @@ export class CartService {
           throw new BadRequestException('Insufficient stock for this product.');
         }
         existingItem.quantity = updateCartItemsDto.quantity;
+        // Recalculate total prices
+        cart.totalPrice = cart.cartItems.reduce(
+          (total, item) => total + item.quantity * item.productId.price,
+          0,
+        );
+        cart.totalPriceAfterDiscount = cart.cartItems.reduce(
+          (total, item) =>
+            total + item.quantity * (item.productId.priceAfterDiscount || item.productId.price),
+          0,
+        );
       }
-    
-      // Recalculate total prices
-      cart.totalPrice = cart.cartItems.reduce(
-        (total, item) => total + item.quantity * item.productId.price,
-        0,
-      );
-    
-      cart.totalPriceAfterDiscount = cart.cartItems.reduce(
-        (total, item) =>
-          total + item.quantity * (item.productId.priceAfterDiscount || item.productId.price),
-        0,
-      );
-    
       await cart.save();
     
       return {
@@ -142,6 +159,10 @@ export class CartService {
       if (!cart) {
         throw new NotFoundException('Not Found Cart');
       }
+      const product = await this.productModule.findById(productId);
+      if (!product) {
+        throw new NotFoundException('Product not found.');
+      }
       const existingItem = cart.cartItems.find((item) =>
             item.productId._id.equals(productId)
           );
@@ -152,7 +173,7 @@ export class CartService {
             !item.productId._id.equals(productId)
           );
 
-          // Recalculate total prices
+       // Recalculate total prices
       cart.totalPrice = cart.cartItems.reduce(
         (total, item) => total + item.quantity * item.productId.price,
         0,
@@ -163,7 +184,20 @@ export class CartService {
           total + item.quantity * (item.productId.priceAfterDiscount || item.productId.price),
         0,
       );
-  
+      if (cart.coupons && cart.coupons.length > 0) {
+        const totalDiscount = cart.coupons.reduce(
+          (sum, coupon) => sum + coupon.discount,
+          0,
+        );
+        cart.totalPrice -= totalDiscount
+        cart.totalPriceAfterDiscount -= totalDiscount
+      }
+      if (cart.totalPrice  <= 0) {
+      cart.totalPrice = 0
+      }
+      if (cart.totalPriceAfterDiscount  <= 0) {
+        cart.totalPriceAfterDiscount = 0
+        }
       await cart.save();
   
       return {
@@ -191,5 +225,48 @@ export class CartService {
       };
     }
     
+    async applyCoupon(user_id: string, couponName: string) {
+      const cart = await this.cartModule.findOne({ user: user_id });
+      const coupon = await this.couponModule.findOne({ name: couponName });
+  
+      if (!cart) {
+        throw new NotFoundException('Not Found Cart');
+      }
+      if (!coupon) {
+        throw new HttpException('Invalid coupon', 400);
+      }
+      const isExpired = new Date(coupon.expirdate) > new Date();
+      if (!isExpired) {
+        throw new HttpException('Invalid coupon', 400);
+      }
+  
+      const ifCouponAlredyUsed = cart.coupons.findIndex(
+        (item) => item.name === couponName,
+      );
+      if (ifCouponAlredyUsed !== -1) {
+        throw new HttpException('Coupon alredy used', 400);
+      }
+  
+      if (cart.totalPrice <= 0) {
+        throw new HttpException('You have full discount', 400);
+      }
+  
+      cart.coupons.push({ name: coupon.name, couponId: coupon._id.toString(),discount:coupon.discount});
+      cart.totalPrice = cart.totalPrice - coupon.discount;
+      cart.totalPriceAfterDiscount = cart.totalPriceAfterDiscount - coupon.discount;
+      if (cart.totalPrice < 0) {
+        cart.totalPrice = 0
+      }
+      if (cart.totalPriceAfterDiscount < 0) {
+        cart.totalPriceAfterDiscount = 0
+      }
+      await cart.save();
+  
+      return {
+        status: 200,
+        message: 'Coupon Applied',
+        data: cart,
+      };
+    }
     
 }

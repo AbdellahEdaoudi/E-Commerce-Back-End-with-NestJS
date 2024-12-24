@@ -38,11 +38,12 @@ export class Cart {
       {
         name: { type: String },
         couponId: { type: mongoose.Schema.Types.ObjectId, ref: Coupon.name },
+        discount :Number
       },
     ],
     default: [],
   })
-  coupons: { name: string; couponId: string }[];
+  coupons: { name: string; couponId: string ,discount:number}[];
 
   @Prop({ type: mongoose.Schema.Types.ObjectId, ref: User.name, required: true })
   user: string;

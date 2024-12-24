@@ -66,4 +66,18 @@ export class CartController {
     return this.cartService.findOne(user_id);
   }
 
+  //  @docs   Can Only User Apply Coupons
+  //  @Route  POST /api/v1/cart/coupon
+  //  @access Private [User]
+  @Post('/coupon/:couponName')
+  @Roles(['user'])
+  @UseGuards(AuthGuard)
+  applyCoupon(@Param('couponName') couponName: string, @Req() req) {
+    if (req.user.role.toLowerCase() === 'admin') {
+      throw new UnauthorizedException();
+    }
+    const user_id = req.user._id;
+    return this.cartService.applyCoupon(user_id, couponName);
+  }
+
 }
