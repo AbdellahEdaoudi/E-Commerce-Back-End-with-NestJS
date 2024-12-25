@@ -1,15 +1,29 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, ValidationPipe, Req, UnauthorizedException, NotFoundException, UseGuards } from '@nestjs/common';
 import { OrderService } from './order.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderDto } from './dto/update-order.dto';
+import { Roles } from 'src/user/decorator/roles.decorator';
+import { AuthGuard } from 'src/user/guard/auth.guard';
 
-@Controller('order')
+@Controller('v1/cart/checkout')
 export class OrderController {
   constructor(private readonly orderService: OrderService) {}
 
-  @Post()
-  create(@Body() createOrderDto: CreateOrderDto) {
-    return this.orderService.create(createOrderDto);
+  @Post(":paymentMethodType")
+  @UseGuards(AuthGuard)
+  @Roles(['user'])
+  create(
+    @Param("paymentMethodType") paymentMethodType:'card' | 'cash',@Req() req,
+    @Body(new ValidationPipe({forbidNonWhitelisted:true,whitelist:true}))
+     createOrderDto: CreateOrderDto) {
+      if (req.user.role.toLowerCase() === 'admin') {
+            throw new UnauthorizedException();
+          }
+      if (![ 'card', 'cash'].includes(paymentMethodType)) {
+        throw new NotFoundException('Payment method not found');
+      }  
+      const user_id = req.user._id;
+    return this.orderService.create(user_id, paymentMethodType,createOrderDto);
   }
 
   @Get()
