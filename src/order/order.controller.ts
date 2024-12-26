@@ -1,6 +1,6 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, ValidationPipe, Req, UnauthorizedException, NotFoundException, UseGuards, Query } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, ValidationPipe, Req, UnauthorizedException, NotFoundException, UseGuards, Query, RawBodyRequest, Headers } from '@nestjs/common';
 import { OrderService } from './order.service';
-import { CreateOrderDto } from './dto/create-order.dto';
+import { AcceptOrderCashDto, CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderDto } from './dto/update-order.dto';
 import { Roles } from 'src/user/decorator/roles.decorator';
 import { AuthGuard } from 'src/user/guard/auth.guard';
@@ -35,23 +35,38 @@ export class OrderController {
     );
   }
 
-  @Get()
-  findAll() {
-    return this.orderService.findAll();
-  }
-
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.orderService.findOne(+id);
-  }
-
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateOrderDto: UpdateOrderDto) {
-    return this.orderService.update(+id, updateOrderDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.orderService.remove(+id);
+  //  @docs   Admin Can Update Order payment cash
+  //  @Route  PATCH /api/v1/cart/checkout/:orderId/cash
+  //  @access Private [User]
+  @Patch(':orderId/cash')
+  @Roles(['admin'])
+  @UseGuards(AuthGuard)
+  updatePaidCash(
+    @Param('orderId') orderId: string,
+    @Body(new ValidationPipe({ forbidNonWhitelisted: true, whitelist: true }))
+    updateOrderDto: AcceptOrderCashDto,
+  ) {
+    return this.orderService.updatePaidCash(orderId, updateOrderDto);
   }
 }
+
+@Controller('v1/checkout/session')
+export class CheckoutCardController {
+  constructor(private readonly orderService: OrderService) {}
+
+  //  @docs   Webhook paid order true auto
+  //  @Route  PATCH /api/v1/checkout/session
+  //  @access Private [Stripe]
+  @Post()
+  updatePaidCard(
+    @Headers('stripe-signature') sig,
+    @Req() request: RawBodyRequest<Request>,
+  ) {
+    const endpointSecret =
+      'whsec_a0596a07de26dd710c7e9ea0d9da01f271ce4fa63924f62be78a918647e63c3f';
+
+    const payload = request.rawBody;
+
+    return this.orderService.updatePaidCard(payload, sig, endpointSecret);
+  }
+} 

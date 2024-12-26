@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { CreateOrderDto } from './dto/create-order.dto';
+import { AcceptOrderCashDto, CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderDto } from './dto/update-order.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { Order } from './order.schema';
@@ -119,20 +119,104 @@ export class OrderService {
       },
     }
     }
+  
+    async updatePaidCash(orderId: string, updateOrderDto: AcceptOrderCashDto) {
+      const order = await this.OrderModule.findById(orderId);
+      if (!order) {
+        throw new NotFoundException('Order not found');
+      }
+  
+      if (order.paymentMethodType !== 'cash') {
+        throw new NotFoundException('This order not paid by cash');
+      }
+  
+      if (order.isPaid) {
+        throw new NotFoundException('Order already paid');
+      }
+  
+      if (updateOrderDto.isPaid) {
+        updateOrderDto.paidAt = new Date();
+        const cart = await this.cartModule
+          .findOne({ user: order.user.toString() })
+          .populate('cartItems.productId user');
+        cart.cartItems.forEach(async (item) => {
+          await this.productModel.findByIdAndUpdate(
+            item.productId,
+            { $inc: { quantity: -item.quantity, sold: item.quantity } },
+            { new: true },
+          );
+        });
+        // reset Cart
+        await this.cartModule.findOneAndUpdate(
+          { user: order.user.toString() },
+          { cartItems: [], totalPrice: 0 },
+        );
+      }
+  
+      if (updateOrderDto.isDeliverd) {
+        updateOrderDto.deliverdAt = new Date();
+      }
+  
+      const updatedOrder = await this.OrderModule.findByIdAndUpdate(
+        orderId,
+        { ...updateOrderDto },
+        { new: true },
+      );
+  
+      return {
+        status: 200,
+        message: 'Order updated successfully',
+        data: updatedOrder,
+      };
+    }
 
-  findAll() {
-    return `This action returns all order`;
-  }
+    async updatePaidCard(payload: any, sig: any, endpointSecret: string) {
+      let event;
+  
+      try {
+        event = stripe.webhooks.constructEvent(payload, sig, endpointSecret);
+      } catch (err) {
+        console.log(`Webhook Error: ${err.message}`);
+        return;
+      }
+  
+      // Handle the event
+      switch (event.type) {
+        case 'checkout.session.completed':
+          const sessionId = event.data.object.id;
+  
+          const order = await this.OrderModule.findOne({ sessionId });
+          order.isPaid = true;
+          order.isDeliverd = true;
+          order.paidAt = new Date();
+          order.deliverdAt = new Date();
+  
+          const cart = await this.cartModule
+            .findOne({ user: order.user.toString() })
+            .populate('cartItems.productId user');
+  
+          cart.cartItems.forEach(async (item) => {
+            await this.productModel.findByIdAndUpdate(
+              item.productId,
+              { $inc: { quantity: -item.quantity, sold: item.quantity } },
+              { new: true },
+            );
+          });
+  
+          // reset Cart
+          await this.cartModule.findOneAndUpdate(
+            { user: order.user.toString() },
+            { cartItems: [], totalPrice: 0 },
+          );
+  
+          await order.save();
+          await cart.save();
+  
+          break;
+        // ... handle other event types
+        default:
+          console.log(`Unhandled event type ${event.type}`);
+      }
+    }
 
-  findOne(id: number) {
-    return `This action returns a #${id} order`;
-  }
-
-  update(id: number, updateOrderDto: UpdateOrderDto) {
-    return `This action updates a #${id} order`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} order`;
-  }
 }

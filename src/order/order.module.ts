@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { OrderService } from './order.service';
-import { OrderController } from './order.controller';
+import { CheckoutCardController, OrderController } from './order.controller';
 import { Order, OrderSchema } from './order.schema';
 import { MongooseModule } from '@nestjs/mongoose';
 import { Cart, CartSchema } from 'src/cart/cart.schema';
@@ -17,7 +17,7 @@ import { Product, ProductSchema } from 'src/product/product.schema';
 
       ]),
     ],
-  controllers: [OrderController],
+  controllers: [OrderController,CheckoutCardController],
   providers: [OrderService],
 })
 export class OrderModule {}
