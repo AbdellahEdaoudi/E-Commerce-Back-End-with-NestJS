@@ -55,11 +55,9 @@ export class User {
   })
   phoneNumber?: string;
 
-  @Prop({
-    type: String,
-    required: false,
-  })
-  address?: string;
+  @Prop({ type: String })
+  address: string;
+
 
   @Prop({
     type: Boolean,

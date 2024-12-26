@@ -21,6 +21,7 @@ export class Cart {
   })
   cartItems: { 
     productId: {
+      [x: string]: any;
       _id: Types.ObjectId;
       price: number;
       priceAfterDiscount?: number;
@@ -45,8 +46,9 @@ export class Cart {
   })
   coupons: { name: string; couponId: string ,discount:number}[];
 
-  @Prop({ type: mongoose.Schema.Types.ObjectId, ref: User.name, required: true })
-  user: string;
+  @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true })
+  user: Types.ObjectId;
+
 }
 
 export const CartSchema = SchemaFactory.createForClass(Cart);

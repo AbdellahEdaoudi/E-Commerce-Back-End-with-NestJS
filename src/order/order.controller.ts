@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, ValidationPipe, Req, UnauthorizedException, NotFoundException, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, ValidationPipe, Req, UnauthorizedException, NotFoundException, UseGuards, Query } from '@nestjs/common';
 import { OrderService } from './order.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderDto } from './dto/update-order.dto';
@@ -13,7 +13,7 @@ export class OrderController {
   @UseGuards(AuthGuard)
   @Roles(['user'])
   create(
-    @Param("paymentMethodType") paymentMethodType:'card' | 'cash',@Req() req,
+    @Param("paymentMethodType") paymentMethodType:'card' | 'cash',@Req() req,@Query() query,
     @Body(new ValidationPipe({forbidNonWhitelisted:true,whitelist:true}))
      createOrderDto: CreateOrderDto) {
       if (req.user.role.toLowerCase() === 'admin') {
@@ -21,9 +21,18 @@ export class OrderController {
           }
       if (![ 'card', 'cash'].includes(paymentMethodType)) {
         throw new NotFoundException('Payment method not found');
-      }  
+      }
+      const {
+        success_url = "https://edaoudi-portfolio.vercel.app",
+        cancel_url = "https://edaoudi-portfolio.vercel.app"} = query;
+        const dataAfterPayment = {
+          success_url,
+          cancel_url,
+        }
       const user_id = req.user._id;
-    return this.orderService.create(user_id, paymentMethodType,createOrderDto);
+    return this.orderService.create(user_id, paymentMethodType,createOrderDto,dataAfterPayment
+
+    );
   }
 
   @Get()

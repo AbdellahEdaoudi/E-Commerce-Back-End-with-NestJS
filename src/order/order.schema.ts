@@ -1,32 +1,54 @@
-import { Schema as MongooseSchema, Types } from 'mongoose';
+import mongoose, { Schema as MongooseSchema, Types } from 'mongoose';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
+import { User } from 'src/user/user.schema';
+import { Product } from 'src/product/product.schema';
 
 @Schema({ timestamps: true })
 export class Order extends Document {
-  @Prop({ type: Types.ObjectId, ref: 'User', required: true })
-  user: string;
-
+  @Prop({
+    type: mongoose.Schema.Types.ObjectId,
+    required: true,
+  })
+  user: typeof User;
+  @Prop({
+    type: String,
+    required: false,
+  })
+  sessionId: string;
   @Prop({
     type: [
       {
-        productId: { type: Types.ObjectId, ref: 'Product', required: true },
-        quantity: { type: Number, required: true },
-        color: { type: String,default: '' },
-        price: { type: Number, required: true },
+        productId: {
+          type: mongoose.Schema.Types.ObjectId,
+          require: true,
+          ref: Product.name,
+        },
+        quantity: {
+          type: Number,
+          required: true,
+        },
+        color: {
+          type: String,
+          default: '',
+        },
       },
     ],
-    required: true,
   })
-  cartItems: { 
-    productId: {
-      _id: Types.ObjectId;
-      price: number;
-      priceAfterDiscount?: number;
-    };
-    quantity: number; color: string; price: number }[];
+  cartItems: [
+    {
+      productId: {
+        _id: string;
+        price: number;
+        priceAfterDiscount: number;
+      };
+      quantity: number;
+      color: string;
+    },
+  ];
 
-  @Prop({ type: Types.ObjectId, default: 0 })
+
+  @Prop({ type: Number, default: 0 })
   tax: number;
 
   @Prop({ type: Number, default: 0 })
@@ -51,22 +73,10 @@ export class Order extends Document {
   deliverdAt: Date;
 
   @Prop({
-    type: {
-      alias: { type: String, required: true },
-      details: { type: String, required: true },
-      phone: { type: String, required: true },
-      city: { type: String, required: true },
-      postalCode: { type: String, required: true },
-    },
-    required: true,
+    type: String,
+    required: false,
   })
-  shippingAddress: {
-    alias: string;
-    details: string;
-    phone: string;
-    city: string;
-    postalCode: string;
-  };
+  shippingAddress: string;
 }
 
 export const OrderSchema = SchemaFactory.createForClass(Order);
