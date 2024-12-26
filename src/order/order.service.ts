@@ -8,6 +8,10 @@ import { Cart } from 'src/cart/cart.schema';
 import { Tax } from 'src/tax/tax.schema';
 import { User } from 'src/user/user.schema';
 import { Product } from 'src/product/product.schema';
+// const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+const stripe = require('stripe')(
+  `sk_test_51QZyAIDvfMS2Q0DTGoGVmDnO5JzvYlIlAJj3orWzdnjNgyqmqdfzGR5fPl7ece7KDbosoy52eHpP0u26DstwktEH00ZyVGYv7A`
+);
 
 @Injectable()
 export class OrderService {
@@ -45,13 +49,75 @@ export class OrderService {
           isPaid:data.totalOrderPrice === 0 ? true : false,
           paidAt:data.totalOrderPrice === 0 ? new Date() : undefined,
           isDeliverd:false});
-          await this.cartModule.findOneAndUpdate({ user: user_id }, { cartItems: [],totalPriceAfterDiscount:0,totalPrice:0}, { new: true })
+          await this.cartModule.findOneAndUpdate({ user: user_id }, 
+            { cartItems: [],totalPriceAfterDiscount:0,totalPrice:0}, { new: true });
+          if (data.totalOrderPrice === 0) {
+            cart.cartItems.forEach(async (item)=>{
+              await this.productModel.findByIdAndUpdate(item.productId._id, {
+                $inc: { quantity: -item.quantity,sold:item.quantity }
+              },{ new: true });
+            })
+          }
         return {
           status: 200,
           message: 'Order created successfully',
           data: order,
         }
      }
+     const line_items = cart.cartItems.map(({productId,color}) => {
+      return {
+        price_data: {
+          currency: 'usd',
+          unit_amount: Math.round(data.totalOrderPrice * 100),
+          product_data: {
+            name: productId.title,
+            description: productId.description,
+            images: [productId.imageCover, ...productId?.images],
+            metadata: {
+              color,
+            }
+          },
+        },
+        quantity:1,
+      };
+    });
+
+    // Stripe payment
+    const session = await stripe.checkout.sessions.create({
+      line_items,
+      mode: "payment",
+      success_url: dataAfterPayment.success_url,
+      cancel_url: dataAfterPayment.cancel_url,
+  
+      client_reference_id: user_id.toString(),
+      customer_email: cart.user.email,
+      metadata: {
+        address: data.shippingAddress,
+      },
+    });
+    // insert order   in database
+    const order = await this.OrderModule.create(
+      { 
+        ...data,
+        sessionId : session.id,
+        isPaid:data.totalOrderPrice === 0 ? true : false,
+        paidAt:data.totalOrderPrice === 0 ? new Date() : undefined,
+        isDeliverd:false
+      });
+    
+    return {
+      status: 200,
+      message: 'Order created successfully',
+      data: {
+        url: session.url,
+        success_url: `${session.success_url}?session_id=${session.id}`,
+        cuncel_url: session.cancel_url,
+        expires_at: new Date(session.expires_at * 1000),
+        sessionId: session.id,
+        totalPrice:session.amount_total,
+        data: order,
+      },
+    }
     }
 
   findAll() {

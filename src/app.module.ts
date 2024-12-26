@@ -18,7 +18,9 @@ import { CartModule } from './cart/cart.module';
 import { OrderModule } from './order/order.module';
 
 @Module({
-  imports: [ConfigModule.forRoot(),MongooseModule.forRoot('mongodb://localhost:27017/Ecom-nest'), UserModule,
+  imports: [ConfigModule.forRoot({
+    isGlobal: true,
+  }),MongooseModule.forRoot('mongodb://localhost:27017/Ecom-nest'), UserModule,
     JwtModule.register({
       global: true,
       secret: process.env.JWT_SECRET,
