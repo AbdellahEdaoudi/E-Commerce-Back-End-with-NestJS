@@ -219,4 +219,14 @@ export class OrderService {
       }
     }
 
+    async findAllOrdersOnUser(user_id: string) {
+      const orders = await this.OrderModule.find({ user: user_id });
+      return {
+        status: 200,
+        message: 'Orders found',
+        length: orders.length,
+        data: orders,
+      };
+    }
+
 }

@@ -70,3 +70,21 @@ export class CheckoutCardController {
     return this.orderService.updatePaidCard(payload, sig, endpointSecret);
   }
 } 
+@Controller('v1/order/user')
+export class OrderForUserController {
+  constructor(private readonly orderService: OrderService) {}
+
+  //  @docs   User Can get all order
+  //  @Route  GET /api/v1/order/user
+  //  @access Private [User]
+  @Get()
+  @Roles(['user'])
+  @UseGuards(AuthGuard)
+  findAllOrdersOnUser(@Req() req) {
+    if (req.user.role.toLowerCase() === 'admin') {
+      throw new UnauthorizedException();
+    }
+    const user_id = req.user._id;
+    return this.orderService.findAllOrdersOnUser(user_id);
+  }
+}
