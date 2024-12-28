@@ -88,3 +88,26 @@ export class OrderForUserController {
     return this.orderService.findAllOrdersOnUser(user_id);
   }
 }
+@Controller('v1/order/admin')
+export class OrderForAdminController {
+  constructor(private readonly orderService: OrderService) {}
+
+  //  @docs   Admin Can get all order
+  //  @Route  GET /api/v1/order/admin
+  //  @access Private [Admin]
+  @Get()
+  @Roles(['admin'])
+  @UseGuards(AuthGuard)
+  findAllOrders() {
+    return this.orderService.findAllOrders();
+  }
+  //  @docs   Admin Can get all order
+  //  @Route  GET /api/v1/order/admin/:userId
+  //  @access Private [Admin]
+  @Get(':userId')
+  @Roles(['admin'])
+  @UseGuards(AuthGuard)
+  findAllOrdersByUserId(@Param('userId') userId: string) {
+    return this.orderService.findAllOrdersOnUser(userId);
+  }
+}

@@ -229,4 +229,14 @@ export class OrderService {
       };
     }
 
+    async findAllOrders() {
+      const orders = await this.OrderModule.find({});
+      return {
+        status: 200,
+        message: 'Orders found',
+        length: orders.length,
+        data: orders,
+      };
+    }
+
 }
