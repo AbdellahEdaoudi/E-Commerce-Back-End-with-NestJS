@@ -20,7 +20,7 @@ import { OrderModule } from './order/order.module';
 @Module({
   imports: [ConfigModule.forRoot({
     isGlobal: true,
-  }),MongooseModule.forRoot('mongodb://localhost:27017/Ecom-nest'), UserModule,
+  }),MongooseModule.forRoot(process.env.MONGO_URI), UserModule,
     JwtModule.register({
       global: true,
       secret: process.env.JWT_SECRET,
