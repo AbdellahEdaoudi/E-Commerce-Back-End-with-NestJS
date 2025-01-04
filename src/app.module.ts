@@ -16,6 +16,7 @@ import { ProductModule } from './product/product.module';
 import { ReviewModule } from './review/review.module';
 import { CartModule } from './cart/cart.module';
 import { OrderModule } from './order/order.module';
+import { AppController } from './app.controller';
 
 @Module({
   imports: [ConfigModule.forRoot({
@@ -38,7 +39,7 @@ import { OrderModule } from './order/order.module';
     }),
     CategoryModule,SubCategoryModule, BrandModule, CouponModule, SupplierModule, RequestProductModule, TaxModule, ProductModule, ReviewModule, CartModule, OrderModule
   ],
-  controllers: [],
+  controllers: [AppController],
   providers: [],
 })
 export class AppModule {}
