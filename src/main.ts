@@ -6,7 +6,8 @@ async function bootstrap() {
     rawBody:true,
     bodyParser:true,
   });
-  app.setGlobalPrefix("/api")
+  app.setGlobalPrefix("/")
+  // app.setGlobalPrefix("/api")
   await app.listen(3000);
 }
 bootstrap();
