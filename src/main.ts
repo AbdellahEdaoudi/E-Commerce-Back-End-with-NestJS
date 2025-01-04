@@ -10,3 +10,6 @@ async function bootstrap() {
   await app.listen(process.env.PORT ?? 3000);
 }
 bootstrap();
+
+// Export the bootstrap function for Vercel
+export default bootstrap;
